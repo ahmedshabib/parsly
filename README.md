@@ -9,7 +9,7 @@ Parsly attempts to solve this problem by providing a clean interface to parse we
 ###Installation
 
 #### Using PIP
-Yet to upload to PIP
+sudo pip install parsly
 #### Using Setup.py
 sudo python setup.py install
 
