@@ -27,7 +27,7 @@ class Parsly():
         # # Applying the XPATH filters for each of the item .
 
 
-        config = config_main["content"]
+        config = config_main["$parameters"]
         for item in config.keys():
             item_node = tree.xpath(config.get(item).get("path", "//junk"))
             if len(item_node) > 0:
