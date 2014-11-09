@@ -9,7 +9,7 @@
         "//*[@id=\"story\"]/section/script",
         "//div[@class=\"see-also\"]"
     ],
-    "content" : {
+    "$parameters" : {
         "content": {
             "path": "//*[@id=\"story\"]/section",
             "type": "html"
