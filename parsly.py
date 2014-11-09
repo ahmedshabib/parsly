@@ -19,7 +19,7 @@ class Parsly():
         result = {}
         # # Loading the config file for the website
         config_main = json.load(open("configs/" + site_name + ".json"))
-        e_thing_to_remove = config_main.get("e_thing_to_remove")
+        e_thing_to_remove = config_main.get("$remove")
         for item in e_thing_to_remove:
             for elem in tree.xpath(item):
                 if len(elem) > 0:
