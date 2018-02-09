@@ -1,68 +1,22 @@
 {
-    "$remove": [
-        "//script",
-        "//div[@class=\"gads\"]",
-        "//comment()",
-        "//div[@class=\"bonus-content\"]",
-        "//*[@id=\"story\"]/section/section[@class=\"gallery\"]",
-        "//*[@id=\"story\"]/section/div[@class=\"shift-to-hero\"]",
-        "//*[@id=\"story\"]/section/script",
-        "//div[@class=\"see-also\"]"
-    ],
-    "$parameters" : {
-        "content": {
-            "path": "//*[@id=\"story\"]/section",
+  "$remove": [
+    "//script"
+  ],
+  "$parameters": {
+    "lines": {
+      "path": "//table[@class=\"details\"]//tr",
+      "selector": "body > div > table.details > tbody > tr",
+      "type": "nodes",
+      "node": {
+        "type": "node",
+        "$parameters": {
+          "text": {
+            "path": "//td",
+            "selector": "",
             "type": "html"
-        },
-
-        "title": {
-            "path": "//*[@id=\"story\"]/header/h1",
-            "type": "text"
-        },
-
-        "main_image_url": {
-            "path": "//*[@id=\"story\"]/header/figure/img",
-            "type": "node",
-            "query_attrib": "src"
-        },
-
-        "main_image_caption": {
-            "path": "//*[@id=\"story\"]/header/figure/figcaption",
-            "type": "text"
-        },
-
-        "main_image_credits": {
-            "path": "//*[@id=\"story\"]/header/figure/div[@class=\"image-credit\"]",
-            "type": "text"
-        },
-
-        "main_video_url": {
-            "path": "//*[@id=\"story\"]/section/div[@class=\"shift-to-hero\"]/p/iframe",
-            "type": "node",
-            "query_attrib": "src"
-        },
-
-        "main_image_url_twitter": {
-            "path": "/html/head/meta[@name=\"twitter:image\"]",
-            "type": "node",
-            "query_attrib": "content"
-        },
-
-        "category": {
-            "path": "//*[@id=\"story\"]/footer[@class=\"article-topics\"]/a",
-            "type": "nodes",
-            "subtype": "text"
-        },
-
-        "author_name": {
-            "path": "//*[@id=\"story\"]/header/div[@class=\"article-info\"]/a/div/span",
-            "type": "text"
-        },
-
-        "author_image": {
-            "path": "//*[@id=\"story\"]/header/div[@class=\"article-info\"]/a/img",
-            "type": "node",
-            "query_attrib": "src"
+          }
         }
+      }
     }
+  }
 }

@@ -1,24 +1,68 @@
-__author__ = 'Ahmed Shabib'
-from lxml.html import clean
-import re
+import urllib
+from urllib.parse import urlparse
 
-import urllib2
-from lxml import etree
+import requests
+
+__author__ = 'Ahmed Shabib'
+from lxml.html import clean, HTMLParser, parse, tostring
+import re
+from io import StringIO, BytesIO
+
 import json
-from urlparse import urlparse
-from lxml.etree import tostring
+
 
 class Parsly():
     def __init__(self):
+        self.htmlparser = HTMLParser()
         self.__cleaner__ = clean.Cleaner(page_structure=True)
 
-    def parse(self, url, site_name):
-        response = urllib2.urlopen(url)
-        htmlparser = etree.HTMLParser()
-        tree = etree.parse(response, htmlparser)
+    def process_tree(self, tree, config):
+        param_keys = config.keys()
+
+        result = {}
+        for item in param_keys:
+            config_item = config.get(item, {})
+            item_nodes = tree.xpath(config_item.get("path", "//junk"))
+            # item_nodes = tree.cssselect(config_item.get("selector", "//junk"))
+            if len(item_nodes) > 0:
+                if config_item["type"] == "nodes":
+                    node_meta = config_item["node"]
+                    for elem in item_nodes:
+                        if node_meta["type"] == "node":
+                            if not result.get(item, None):
+                                result[item] = []
+                            result[item].append(self.process_tree(parse(BytesIO(tostring(elem)), self.htmlparser),
+                                                                  node_meta["$parameters"]))
+                        elif node_meta["type"] == "text":
+                            result[item].append(elem.text)
+                elif config_item["type"] == "node":
+                    item_node = item_nodes[0]
+                    node_meta = config_item["node"]
+                    if node_meta["type"] == "query":
+                        result[item] = item_node.get(config_item.get("query_attrib", ""))
+                    elif node_meta["type"] == "text":
+                        result[item] = item_node.text
+                    elif node_meta["type"] == "html":
+                        result[item] = self.__cleaner__.clean_html(tostring(item_node, method="html", encoding="utf-8"))
+                    elif node_meta["type"] == "node":
+                        result[item] = self.process_tree(parse(BytesIO(tostring(item_node)), self.htmlparser),
+                                                         node_meta["$parameters"])
+                elif config_item["type"] == "html":
+                    item_node = item_nodes[0]
+                    result[item] = self.__cleaner__.clean_html(tostring(item_node, method="html", encoding="utf-8"))
+                elif config_item["type"] == "text":
+                    item_node = item_nodes[0]
+                    result[item] = item_node.text
+            else:
+                result[item] = ""
+        return result
+
+    def parse(self, url, file_name):
+        response = requests.get(url)
+        tree = parse(StringIO(response.text), self.htmlparser)
         result = {}
         # # Loading the config file for the website
-        config_main = json.load(open("configs/" + site_name + ".json"))
+        config_main = json.load(open(file_name))
         e_thing_to_remove = config_main.get("$remove")
         for item in e_thing_to_remove:
             for elem in tree.xpath(item):
@@ -26,30 +70,8 @@ class Parsly():
                     elem.getparent().remove(elem)
         # # Applying the XPATH filters for each of the item .
 
-
         config = config_main["$parameters"]
-        for item in config.keys():
-            item_node = tree.xpath(config.get(item).get("path", "//junk"))
-            if len(item_node) > 0:
-                item_node = item_node[0]
-
-                config_item = config.get(item, "")
-                config_item_type = config_item.get("type", "")
-                if config_item_type == "nodes":
-                    for elem in item_node:
-                        if config_item.get("subtype", "") == "node":
-                            result[item].append(elem.get(config_item.get("query_attrib", "")).capitalize())
-                        elif config_item.get("subtype", "") == "text":
-                            result[item] = elem.text
-                elif config_item_type == "node":
-                    result[item] = item_node.get(config_item.get("query_attrib", ""))
-                elif config_item_type == "html":
-                    result[item] = self.__cleaner__.clean_html(tostring(item_node, method="html", encoding="utf-8"))
-                elif config_item_type == "text":
-                    result[item] = item_node.text
-            else:
-                result[item] = ""
-
+        result = self.process_tree(tree, config)
         return result
 
     @staticmethod
@@ -67,3 +89,9 @@ class Parsly():
             return False
         else:
             return True
+
+
+p = Parsly()
+result = p.parse("http://www.cargoupdate.com/tracktrace/loaddata.aspx?carrier=SV&awb=065-27894812",
+                 "../config/mashable.json")
+print(result)
