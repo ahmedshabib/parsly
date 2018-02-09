@@ -1,10 +1,11 @@
 import urllib
 from urllib.parse import urlparse
+import cssselect
 
 import requests
 
 __author__ = 'Ahmed Shabib'
-from lxml.html import clean, HTMLParser, parse, tostring
+from lxml.html import clean, HTMLParser, parse, tostring, fromstring
 import re
 from io import StringIO, BytesIO
 
@@ -18,12 +19,22 @@ class Parsly():
 
     def process_tree(self, tree, config):
         param_keys = config.keys()
-
         result = {}
         for item in param_keys:
+            process_tree = tree
             config_item = config.get(item, {})
-            item_nodes = tree.xpath(config_item.get("path", "//junk"))
-            # item_nodes = tree.cssselect(config_item.get("selector", "//junk"))
+            item_nodes = []
+            for selector in config_item.get("selector", []):
+                print(process_tree)
+                if process_tree is not None:
+                    item_nodes = process_tree.cssselect(selector)
+                    print(selector)
+                    print(item_nodes)
+                if len(item_nodes) > 0:
+                    process_tree = item_nodes[0]
+                else:
+                    process_tree = None
+            print(item_nodes)
             if len(item_nodes) > 0:
                 if config_item["type"] == "nodes":
                     node_meta = config_item["node"]
@@ -31,7 +42,7 @@ class Parsly():
                         if node_meta["type"] == "node":
                             if not result.get(item, None):
                                 result[item] = []
-                            result[item].append(self.process_tree(parse(BytesIO(tostring(elem)), self.htmlparser),
+                            result[item].append(self.process_tree(elem,
                                                                   node_meta["$parameters"]))
                         elif node_meta["type"] == "text":
                             result[item].append(elem.text)
@@ -45,7 +56,7 @@ class Parsly():
                     elif node_meta["type"] == "html":
                         result[item] = self.__cleaner__.clean_html(tostring(item_node, method="html", encoding="utf-8"))
                     elif node_meta["type"] == "node":
-                        result[item] = self.process_tree(parse(BytesIO(tostring(item_node)), self.htmlparser),
+                        result[item] = self.process_tree(elem,
                                                          node_meta["$parameters"])
                 elif config_item["type"] == "html":
                     item_node = item_nodes[0]
@@ -59,15 +70,10 @@ class Parsly():
 
     def parse(self, url, file_name):
         response = requests.get(url)
-        tree = parse(StringIO(response.text), self.htmlparser)
+        tree = fromstring(response.text)
         result = {}
         # # Loading the config file for the website
         config_main = json.load(open(file_name))
-        e_thing_to_remove = config_main.get("$remove")
-        for item in e_thing_to_remove:
-            for elem in tree.xpath(item):
-                if len(elem) > 0:
-                    elem.getparent().remove(elem)
         # # Applying the XPATH filters for each of the item .
 
         config = config_main["$parameters"]

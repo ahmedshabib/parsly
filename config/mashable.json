@@ -5,14 +5,19 @@
   "$parameters": {
     "lines": {
       "path": "//table[@class=\"details\"]//tr",
-      "selector": "body > div > table.details > tbody > tr",
+      "selector": [
+        "table.details",
+        "tr.line"
+      ],
       "type": "nodes",
       "node": {
         "type": "node",
         "$parameters": {
           "text": {
             "path": "//td",
-            "selector": "",
+            "selector": [
+              "td"
+            ],
             "type": "html"
           }
         }
